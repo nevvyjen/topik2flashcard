@@ -110,6 +110,27 @@
     color:#fff;
     transform:rotateY(180deg);
   }
+  .speak-btn{
+    position:absolute;
+    top:14px;
+    right:14px;
+    border:none;
+    background:#f1e6e6;
+    color:var(--main);
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    font-size:1.2rem;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .speak-btn-back{
+    background:rgba(255,255,255,0.25);
+    color:#fff;
+  }
+  .speak-btn:active{transform:scale(0.9);}
   .word-kr{font-size:2rem;font-weight:700;color:var(--main);}
   .word-level{
     display:inline-block;
@@ -305,11 +326,13 @@
     <div class="card-stage">
       <div class="flashcard" id="flashcard">
         <div class="face front">
+          <button class="speak-btn" id="speakFront" onclick="event.stopPropagation(); speakWord();">🔊</button>
           <div class="word-kr" id="fcKr"></div>
           <div class="word-level" id="fcLevel"></div>
           <div class="word-hint">แตะการ์ดเพื่อดูความหมาย</div>
         </div>
         <div class="face back">
+          <button class="speak-btn speak-btn-back" id="speakBack" onclick="event.stopPropagation(); speakWord();">🔊</button>
           <div class="word-th" id="fcTh"></div>
           <div class="word-ex" id="fcEx"></div>
           <div class="word-syn" id="fcSyn"></div>
@@ -392,6 +415,34 @@ const VOCAB = [
 {kr:"대다", th:"กับ, แตะ, สัมผัส", level:"3급", ex:"핸드폰을 귀에 대고 통화하고 있다.", exTh:"กำลังคุยโทรศัพท์มือถือที่หูและคุยโทรศัพท์"},
 {kr:"덧붙이다", th:"เพิ่ม, เพิ่มเติม, เสริม", level:"4급", ex:"더러워진 곳에 흰 벽지를 덧붙였다.", exTh:"ติดกระดาษบุผนังสีขาวเพิ่มเข้าไปตรงพื้นที่สกปรก", syn:"ตรงข้าม: 떼다"}
 ];
+
+/* ---------- SPEECH ---------- */
+let koreanVoice = null;
+function loadVoices(){
+  const voices = speechSynthesis.getVoices();
+  koreanVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko')) || null;
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+function speak(text){
+  if(!('speechSynthesis' in window)){
+    alert('ขออภัย อุปกรณ์นี้ไม่รองรับการอ่านออกเสียง');
+    return;
+  }
+  speechSynthesis.cancel();
+  const clean = text.replace(/[¹²]/g,'');
+  const utter = new SpeechSynthesisUtterance(clean);
+  utter.lang = 'ko-KR';
+  if(koreanVoice) utter.voice = koreanVoice;
+  utter.rate = 0.85;
+  speechSynthesis.speak(utter);
+}
+function speakWord(){
+  const idx = flashOrder[flashIndex];
+  speak(VOCAB[idx].kr);
+}
 
 /* ---------- FLASHCARDS ---------- */
 let flashOrder = VOCAB.map((_,i)=>i);
@@ -597,9 +648,12 @@ function answerFill(chosenIdx, correctIdx, btnEl){
 /* ---------- LIST VIEW ---------- */
 function renderList(){
   const area = document.getElementById('listArea');
-  area.innerHTML = VOCAB.map(v => `
+  area.innerHTML = VOCAB.map((v,i) => `
     <div class="list-item">
-      <div class="word-kr">${v.kr} <span class="word-level">${v.level}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="word-kr">${v.kr} <span class="word-level">${v.level}</span></div>
+        <button class="speak-btn" style="position:static;width:32px;height:32px;font-size:1rem;" onclick="speak('${v.kr.replace(/[¹²]/g,'')}')">🔊</button>
+      </div>
       <div class="word-th">${v.th}</div>
       <div class="word-ex">${v.ex} — ${v.exTh}</div>
     </div>
