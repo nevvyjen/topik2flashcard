@@ -1,664 +1,477 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ศัพท์เกาหลี - แฟลชการ์ด & ข้อสอบ</title>
-<style>
-  :root{
-    --main:#8c1d2f;
-    --main-light:#b0293f;
-    --bg:#faf6f4;
-    --card:#ffffff;
-    --text:#2c2020;
-    --muted:#7a6a6a;
-    --good:#2e7d32;
-    --bad:#c62828;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:"Noto Sans Thai","Segoe UI",sans-serif;
-    background:var(--bg);
-    color:var(--text);
-  }
-  header{
-    background:linear-gradient(135deg,var(--main),var(--main-light));
-    color:#fff;
-    padding:20px 16px;
-    text-align:center;
-  }
-  header h1{margin:0;font-size:1.4rem;}
-  header p{margin:4px 0 0;font-size:0.85rem;opacity:0.9;}
-  nav{
-    display:flex;
-    justify-content:center;
-    gap:8px;
-    background:#fff;
-    padding:10px;
-    border-bottom:2px solid #eee;
-    flex-wrap:wrap;
-    position:sticky;
-    top:0;
-    z-index:10;
-  }
-  nav button{
-    border:none;
-    background:#f1e6e6;
-    color:var(--main);
-    padding:10px 18px;
-    border-radius:20px;
-    font-size:0.95rem;
-    cursor:pointer;
-    font-weight:600;
-    transition:0.2s;
-  }
-  nav button.active{
-    background:var(--main);
-    color:#fff;
-  }
-  main{
-    max-width:720px;
-    margin:0 auto;
-    padding:20px 16px 60px;
-  }
-  .view{display:none;}
-  .view.active{display:block;}
-
-  /* Flashcards */
-  .flash-controls{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:12px;
-    font-size:0.9rem;
-    color:var(--muted);
-  }
-  .card-stage{
-    perspective:1200px;
-    height:280px;
-    margin-bottom:16px;
-  }
-  .flashcard{
-    width:100%;
-    height:100%;
-    position:relative;
-    transform-style:preserve-3d;
-    transition:transform 0.5s;
-    cursor:pointer;
-  }
-  .flashcard.flipped{transform:rotateY(180deg);}
-  .face{
-    position:absolute;
-    inset:0;
-    backface-visibility:hidden;
-    border-radius:16px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-    text-align:center;
-    box-shadow:0 6px 20px rgba(0,0,0,0.12);
-  }
-  .face.front{
-    background:var(--card);
-    border:2px solid var(--main-light);
-  }
-  .face.back{
-    background:var(--main);
-    color:#fff;
-    transform:rotateY(180deg);
-  }
-  .speak-btn{
-    position:absolute;
-    top:14px;
-    right:14px;
-    border:none;
-    background:#f1e6e6;
-    color:var(--main);
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    font-size:1.2rem;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-  }
-  .speak-btn-back{
-    background:rgba(255,255,255,0.25);
-    color:#fff;
-  }
-  .speak-btn:active{transform:scale(0.9);}
-  .word-kr{font-size:2rem;font-weight:700;color:var(--main);}
-  .word-level{
-    display:inline-block;
-    margin-top:8px;
-    font-size:0.75rem;
-    background:#f1e6e6;
-    color:var(--main);
-    padding:3px 10px;
-    border-radius:12px;
-  }
-  .word-hint{margin-top:14px;font-size:0.9rem;color:var(--muted);}
-  .word-th{font-size:1.4rem;font-weight:700;}
-  .word-ex{margin-top:14px;font-size:0.9rem;line-height:1.5;opacity:0.95;}
-  .word-syn{margin-top:10px;font-size:0.8rem;opacity:0.85;}
-  .btn-row{
-    display:flex;
-    gap:10px;
-    justify-content:center;
-    flex-wrap:wrap;
-  }
-  .btn{
-    border:none;
-    padding:12px 18px;
-    border-radius:10px;
-    font-size:0.95rem;
-    cursor:pointer;
-    font-weight:600;
-  }
-  .btn-nav{background:#eee;color:var(--text);}
-  .btn-know{background:var(--good);color:#fff;}
-  .btn-unknow{background:var(--bad);color:#fff;}
-  .btn-primary{background:var(--main);color:#fff;}
-  .progress-bar{
-    height:8px;
-    background:#eee;
-    border-radius:4px;
-    overflow:hidden;
-    margin-bottom:14px;
-  }
-  .progress-fill{
-    height:100%;
-    background:var(--main);
-    width:0%;
-    transition:width 0.3s;
-  }
-
-  /* Quiz & Fill-in */
-  .q-box{
-    background:var(--card);
-    border-radius:14px;
-    padding:20px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.08);
-    margin-bottom:16px;
-  }
-  .q-count{font-size:0.85rem;color:var(--muted);margin-bottom:6px;}
-  .q-text{font-size:1.2rem;font-weight:700;margin-bottom:16px;}
-  .q-sentence{font-size:1.1rem;line-height:1.6;margin-bottom:16px;}
-  .blank{
-    display:inline-block;
-    min-width:70px;
-    border-bottom:2px solid var(--main);
-    text-align:center;
-    font-weight:700;
-    color:var(--main);
-  }
-  .options{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .opt-btn{
-    text-align:left;
-    padding:12px 14px;
-    border-radius:10px;
-    border:2px solid #e5d8d8;
-    background:#fff;
-    cursor:pointer;
-    font-size:1rem;
-  }
-  .opt-btn:hover{border-color:var(--main-light);}
-  .opt-btn.correct{background:#e6f4ea;border-color:var(--good);color:var(--good);}
-  .opt-btn.wrong{background:#fdecea;border-color:var(--bad);color:var(--bad);}
-  .opt-btn[disabled]{cursor:default;}
-  .fill-input{
-    width:100%;
-    padding:12px;
-    font-size:1rem;
-    border-radius:10px;
-    border:2px solid #e5d8d8;
-    margin-bottom:12px;
-  }
-  .score-box{
-    text-align:center;
-    padding:30px 20px;
-  }
-  .score-box h2{color:var(--main);}
-  .feedback{
-    margin-top:10px;
-    font-size:0.9rem;
-    font-weight:600;
-  }
-  .feedback.good{color:var(--good);}
-  .feedback.bad{color:var(--bad);}
-  .list-view{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  .list-item{
-    background:var(--card);
-    border-radius:12px;
-    padding:14px 16px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.06);
-  }
-  .list-item .word-kr{font-size:1.3rem;}
-  .list-item .word-th{font-size:1rem;font-weight:600;color:var(--main);}
-  .list-item .word-ex{font-size:0.85rem;color:var(--muted);margin-top:4px;}
-  footer{
-    text-align:center;
-    color:var(--muted);
-    font-size:0.8rem;
-    padding:20px;
-  }
-
-  /* ===== Responsive: phone portrait ===== */
-  @media (max-width: 480px){
-    header h1{font-size:1.15rem;}
-    header p{font-size:0.78rem;}
-    nav{gap:6px;padding:8px;}
-    nav button{padding:8px 12px;font-size:0.82rem;}
-    main{padding:14px 10px 50px;}
-    .card-stage{height:250px;}
-    .word-kr{font-size:1.6rem;}
-    .word-th{font-size:1.2rem;}
-    .word-ex{font-size:0.82rem;}
-    .q-text{font-size:1.05rem;}
-    .q-sentence{font-size:1rem;}
-    .btn{padding:10px 12px;font-size:0.85rem;}
-  }
-
-  /* ===== Responsive: tablet / iPad landscape (wide screens) ===== */
-  @media (min-width: 900px){
-    main{max-width:960px;}
-    .card-stage{height:320px;}
-    .word-kr{font-size:2.4rem;}
-    .word-th{font-size:1.7rem;}
-    .word-ex{font-size:1rem;}
-    .options{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    .list-view{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-    .q-box{padding:28px;}
-  }
-
-  /* ===== Responsive: iPad landscape specifically (short height, wide width) ===== */
-  @media (min-width: 900px) and (max-height: 700px) and (orientation: landscape){
-    header{padding:12px 16px;}
-    nav{position:static;}
-    main{padding:14px 24px 40px;}
-    .card-stage{height:230px;}
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPIK II Master Hub & Smart SRS</title>
+    <!-- Tailwind CSS & Font -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Alpine.js (Lightweight Reactive Framework) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { kanit: ['Kanit', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eeeefb', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+        .perspective { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+    </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8" x-data="topikApp()" x-init="initData()">
 
-<header>
-  <h1>📚 ศัพท์เกาหลี TOPIK</h1>
-  <p>คำกริยา 43 คำ พร้อมตัวอย่างประโยค</p>
-</header>
-
-<nav>
-  <button class="active" data-view="flash">แฟลชการ์ด</button>
-  <button data-view="quiz">ข้อสอบ (เลือกตอบ)</button>
-  <button data-view="fill">เติมประโยค</button>
-  <button data-view="list">รายการคำศัพท์</button>
-</nav>
-
-<main>
-
-  <!-- FLASHCARDS -->
-  <section id="flash" class="view active">
-    <div class="progress-bar"><div class="progress-fill" id="flashProgress"></div></div>
-    <div class="flash-controls">
-      <span id="flashPos">1 / 43</span>
-      <span id="flashScore">รู้แล้ว 0 | ยังไม่รู้ 0</span>
-    </div>
-    <div class="card-stage">
-      <div class="flashcard" id="flashcard">
-        <div class="face front">
-          <button class="speak-btn" id="speakFront" onclick="event.stopPropagation(); speakWord();">🔊</button>
-          <div class="word-kr" id="fcKr"></div>
-          <div class="word-level" id="fcLevel"></div>
-          <div class="word-hint">แตะการ์ดเพื่อดูความหมาย</div>
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-6 text-white shadow-lg mb-6">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold">TOPIK II Master Hub 🎯</h1>
+                <p class="text-indigo-100 text-sm mt-1">ระบบช่วยจำคำศัพท์เชิงลึก (SRS) & ศูนย์รวมการเตรียมสอบ</p>
+            </div>
+            <!-- SRS Stats Quick Bar -->
+            <div class="flex gap-3 text-center">
+                <div class="bg-white/10 backdrop-blur px-4 py-2 rounded-xl">
+                    <span class="block text-xs text-indigo-200">ศัพท์ทั้งหมด</span>
+                    <span class="text-lg font-bold" x-text="vocabs.length">0</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur px-4 py-2 rounded-xl">
+                    <span class="block text-xs text-indigo-200">จำได้ถาวร</span>
+                    <span class="text-lg font-bold text-emerald-300" x-text="vocabs.filter(v => v.srs.status==='easy').length">0</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur px-4 py-2 rounded-xl">
+                    <span class="block text-xs text-indigo-200">คลังจุดอ่อน (Hard)</span>
+                    <span class="text-lg font-bold text-rose-300" x-text="weakBucket.length">0</span>
+                </div>
+            </div>
         </div>
-        <div class="face back">
-          <button class="speak-btn speak-btn-back" id="speakBack" onclick="event.stopPropagation(); speakWord();">🔊</button>
-          <div class="word-th" id="fcTh"></div>
-          <div class="word-ex" id="fcEx"></div>
-          <div class="word-syn" id="fcSyn"></div>
-        </div>
-      </div>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-unknow" onclick="markCard(false)">❌ ยังไม่รู้</button>
-      <button class="btn btn-know" onclick="markCard(true)">✅ รู้แล้ว</button>
-    </div>
-    <div class="btn-row" style="margin-top:12px;">
-      <button class="btn btn-nav" onclick="prevCard()">⬅ ก่อนหน้า</button>
-      <button class="btn btn-nav" onclick="shuffleCards()">🔀 สุ่มใหม่</button>
-      <button class="btn btn-nav" onclick="nextCard()">ถัดไป ➡</button>
-    </div>
-  </section>
+    </header>
 
-  <!-- QUIZ -->
-  <section id="quiz" class="view">
-    <div id="quizArea"></div>
-  </section>
+    <main class="max-w-6xl mx-auto">
+        <!-- Navigation Tabs -->
+        <nav class="flex overflow-x-auto gap-2 mb-6 pb-2 border-b border-slate-200">
+            <button @click="currentTab = 'srs'" :class="currentTab === 'srs' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'" class="px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2 whitespace-nowrap">
+                🎴 SRS Flashcards
+            </button>
+            <button @click="currentTab = 'quiz'" :class="currentTab === 'quiz' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'" class="px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2 whitespace-nowrap">
+                🧩 Auto Quiz & Matching
+            </button>
+            <button @click="currentTab = 'dict'" :class="currentTab === 'dict' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'" class="px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2 whitespace-nowrap">
+                📚 คลังศัพท์ & รากศัพท์ Hanja
+            </button>
+            <button @click="currentTab = 'mocks'" :class="currentTab === 'mocks' ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100'" class="px-5 py-2.5 rounded-xl font-medium text-sm transition flex items-center gap-2 whitespace-nowrap">
+                📊 Mock Test & Mistakes
+            </button>
+        </nav>
 
-  <!-- FILL IN THE BLANK -->
-  <section id="fill" class="view">
-    <div id="fillArea"></div>
-  </section>
+        <!-- 1. SRS FLASHCARD TAB -->
+        <section x-show="currentTab === 'srs'" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">บัตรคำศัพท์ทบทวนรายวัน (Spaced Repetition)</h2>
+                <button @click="filterWeakOnly = !filterWeakOnly" :class="filterWeakOnly ? 'bg-rose-500 text-white' : 'bg-slate-200 text-slate-700'" class="text-xs px-3 py-1.5 rounded-lg font-medium transition">
+                    🔥 ดูเฉพาะศัพท์จุดอ่อน (<span x-text="weakBucket.length"></span>)
+                </button>
+            </div>
 
-  <!-- LIST -->
-  <section id="list" class="view">
-    <div class="list-view" id="listArea"></div>
-  </section>
+            <template x-if="activeCards.length > 0">
+                <div class="max-w-xl mx-auto">
+                    <!-- Flashcard Card Component -->
+                    <div class="relative w-full h-[420px] perspective cursor-pointer" @click="isFlipped = !isFlipped">
+                        <div class="w-full h-full duration-500 transform-style-3d transition-transform relative rounded-3xl shadow-xl bg-white border border-slate-100 p-8 flex flex-col justify-between" :class="isFlipped ? 'rotate-y-180' : ''">
+                            
+                            <!-- Front Side -->
+                            <div class="absolute inset-0 backface-hidden p-8 flex flex-col justify-between bg-white rounded-3xl border border-slate-100">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg" x-text="currentCard.level"></span>
+                                    <button @click.stop="speak(currentCard.word)" class="text-slate-400 hover:text-indigo-600">🔊 ฟังเสียง</button>
+                                </div>
+                                <div class="text-center my-auto">
+                                    <h3 class="text-4xl font-bold text-slate-800 mb-2" x-text="currentCard.word"></h3>
+                                    <span class="text-sm text-indigo-500 font-medium" x-text="currentCard.pos"></span>
+                                </div>
+                                <p class="text-center text-xs text-slate-400">💡 แตะที่การ์ดเพื่อพลิกดูความหมาย & ศัพท์ใกล้เคียง</p>
+                            </div>
 
-</main>
+                            <!-- Back Side -->
+                            <div class="absolute inset-0 backface-hidden rotate-y-180 p-6 flex flex-col justify-between bg-indigo-950 text-white rounded-3xl overflow-y-auto">
+                                <div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <span class="text-xs font-medium text-indigo-300" x-text="currentCard.pos"></span>
+                                        <span class="text-xs bg-indigo-800 text-indigo-200 px-2 py-1 rounded" x-text="currentCard.hanja || 'ไม่มีรากศัพท์จีน'"></span>
+                                    </div>
+                                    <h4 class="text-2xl font-bold text-indigo-100 mb-2" x-text="currentCard.meaning"></h4>
+                                    
+                                    <!-- Cluster / Synonyms -->
+                                    <template x-if="currentCard.related">
+                                        <div class="bg-indigo-900/90 p-2.5 rounded-xl border border-indigo-700/60 my-2 text-xs">
+                                            <span class="text-indigo-300 font-bold">🔗 คำใกล้เคียง/กลุ่มศัพท์:</span>
+                                            <p class="text-indigo-100 mt-0.5" x-text="currentCard.related"></p>
+                                        </div>
+                                    </template>
 
-<footer>ทำจากไฟล์คำศัพท์ที่อัปโหลด • เก็บไฟล์นี้ไว้ทบทวนได้ตลอด</footer>
+                                    <div class="bg-indigo-900/50 p-2.5 rounded-xl border border-indigo-800/50 my-2">
+                                        <p class="text-xs text-indigo-200" x-text="currentCard.sentence || '-'"></p>
+                                        <p class="text-[11px] text-indigo-400 mt-0.5" x-text="currentCard.sentence_trans || '-'"></p>
+                                    </div>
+                                </div>
 
-<script>
-const VOCAB = [
-{kr:"가리다¹", th:"ปิด, บัง, ปกปิด", level:"3급", ex:"그녀는 부끄러움에 얼굴을 가렸다.", exTh:"เธอปิดใบหน้าด้วยความเขินอาย", syn:"คำพ้อง: 감싸다"},
-{kr:"가리다²", th:"แยกแยะ, แยก, เลือก", level:"4급", ex:"시시비비를 가릴 필요가 있다.", exTh:"จำเป็นต้องแยกแยะการกระทำที่ถูกและผิด", syn:"คำพ้อง: 가려내다"},
-{kr:"갇히다", th:"ติดอยู่, ถูกขัง, ถูกกักตัว", level:"4급", ex:"그는 오랫동안 엘리베이터에 갇혔다.", exTh:"เขาติดอยู่ในลิฟต์เป็นเวลานาน"},
-{kr:"감싸다", th:"พัน, ห่อ, ห่อหุ้ม", level:"4급", ex:"그는 다친 곳을 붕대로 감쌌다.", exTh:"เขาพันผ้าพันแผลบริเวณที่บาดเจ็บ"},
-{kr:"감추다", th:"ซ่อน, ซุกซ่อน, อำพราง", level:"4급", ex:"비상금을 서랍 속에 감추었다.", exTh:"ซ่อนเงินฉุกเฉินไว้ในลิ้นชัก"},
-{kr:"갖추다", th:"มี, มีพร้อม", level:"4급", ex:"이곳은 최신 기자재를 갖춘 교실이다.", exTh:"ที่นี่เป็นห้องเรียนที่มีอุปกรณ์ใหม่ล่าสุด"},
-{kr:"건네다", th:"ยื่น, ยื่นให้, ส่งให้", level:"4급", ex:"그녀는 나에게 손수건을 건넸다.", exTh:"เธอยื่นผ้าเช็ดหน้าให้ฉัน"},
-{kr:"겪다", th:"ประสบ, ได้รับ, เผชิญ", level:"4급", ex:"그는 고통을 겪고 한층 강해졌다.", exTh:"เขาประสบกับความยากลำบากจนแข็งแกร่งขึ้นไปอีกขั้น", syn:"คำพ้อง: 치르다"},
-{kr:"견디다", th:"อดทน, ทน, อดกลั้น", level:"4급", ex:"고통을 견딘 만큼 성숙해졌다.", exTh:"เพราะเป็นผู้ใหญ่ขึ้น จึงทนต่อความยากลำบากมา", syn:"คำพ้อง: 버티다"},
-{kr:"구하다", th:"หา, เสาะหา", level:"3급", ex:"일자리를 구하는 것이 갈수록 어렵다.", exTh:"การหางาน ยิ่งหายิ่งยาก", syn:"คำพ้อง: 얻다, 찾다"},
-{kr:"기대다", th:"พิง, อิง, ชม", level:"3급", ex:"난간에 몸을 기대는 것은 위험하다.", exTh:"การพิงตัวมาด้านหน้าจะมองเห็นได้ชัด"},
-{kr:"기울이다", th:"เอน, เอียง", level:"4급", ex:"몸을 앞으로 기울이면 잘 보인다.", exTh:"ถ้าเอนตัวมาด้านหน้าจะมองเห็นได้ชัด"},
-{kr:"깔다", th:"ปู, กาง, กางออก", level:"4급", ex:"나는 아이에게 이부자리를 깔아 주었다.", exTh:"ฉันปูที่นอนให้ลูก", syn:"คำพ้อง: 펴다 | ตรงข้าม: 개키다"},
-{kr:"깨다", th:"ทำ...แตก, แตก", level:"4급", ex:"설거지를 하다가 그릇을 깼다.", exTh:"ล้างจานอยู่แล้วทำถ้วยแตก", syn:"คำพ้อง: 깨뜨리다"},
-{kr:"깨닫다", th:"สำนึก, ตระหนัก, เข้าใจ", level:"4급", ex:"잘못을 일찍 깨달아서 다행이다.", exTh:"โชคดีที่สำนึกผิดได้เร็ว", syn:"คำพ้อง: 알아차리다"},
-{kr:"깨지다", th:"แตก, แตกร้าว", level:"3급", ex:"식탁 위의 화병이 깨졌다.", exTh:"แจกันดอกไม้บนโต๊ะอาหารแตก"},
-{kr:"꽂다", th:"ปัก, เสียบ, ใส่", level:"3급", ex:"선물 받은 꽃을 화병에 꽂았다.", exTh:"ปักดอกไม้ที่ได้รับเป็นของขวัญใส่แจกัน", syn:"ตรงข้าม: 빼다, 뽑다"},
-{kr:"꾸미다", th:"ตกแต่ง, ประดับ, แต่ง", level:"4급", ex:"크리스마스를 위해 집을 꾸몄다.", exTh:"ตกแต่งบ้านสำหรับเทศกาลคริสต์มาส"},
-{kr:"꿈꾸다", th:"ฝัน, ใฝ่ฝัน, มีฝัน", level:"4급", ex:"그는 어젯밤 꿈꾼 것을 이야기했다.", exTh:"เขาเล่าความฝันเมื่อคืน"},
-{kr:"끌다", th:"ลาก, จูง, ดึง", level:"3급", ex:"멀리서 한 사람이 수레를 끌고 간다.", exTh:"ไกลๆ มีคนหนึ่งลากรถเข็นไป"},
-{kr:"나서다", th:"ออกมายืน, ออกมา", level:"4급", ex:"이른 아침부터 길을 나섰다.", exTh:"ออกเดินทางตั้งแต่เช้าตรู่"},
-{kr:"날리다", th:"ปลิว, ลอย, บิน", level:"4급", ex:"바람에 날리는 깃발이 보인다.", exTh:"เห็นธงที่ปลิวไปตามลม"},
-{kr:"낳다", th:"คลอด, คลอดลูก, ออก(ไข่)", level:"3급", ex:"그녀는 아기를 낳은 지 일주일이 됐다.", exTh:"เธอคลอดลูกได้ 1 สัปดาห์แล้ว"},
-{kr:"내놓다", th:"เอา...ออกมา, นำ...ออกมา, ผลิต...ออกมา", level:"4급", ex:"화분을 밖에서 내놓았다.", exTh:"เอากระถางต้นไม้ออกมาไว้ข้างนอก"},
-{kr:"내다보다", th:"มองออกไป, มองไป", level:"4급", ex:"창 밖을 내다보니 이미 밤이었다.", exTh:"พอมองออกไปนอกหน้าต่างก็เป็นเวลากลางคืนแล้ว"},
-{kr:"내려다보다", th:"มองลงไป, มองลง", level:"4급", ex:"아래를 내려다보니 아득했다.", exTh:"พอมองลงไปข้างล่างก็เห็นแบบเลือนราง"},
-{kr:"내밀다", th:"ยื่น, ยื่นให้, ยื่นออกมา", level:"4급", ex:"그는 쓰러진 나에게 손을 내밀었다.", exTh:"เขายื่นมือให้ฉันที่ล้มลง"},
-{kr:"넘기다", th:"เลย, เกินกำหนด, พ้น", level:"4급", ex:"결국 마감일을 넘겨 숙제를 제출했다.", exTh:"สุดท้ายก็ส่งการบ้านเกินกำหนดส่งไปแล้ว"},
-{kr:"넘어서다", th:"ข้าม, ข้ามผ่าน", level:"3급", ex:"고개를 넘어서니 마침내 마을이 보였다.", exTh:"พอข้ามเนินเขาที่สูงที่สุดในหมู่บ้านก็มองเห็น"},
-{kr:"넘치다", th:"ล้น, ท่วม, ทะลัก", level:"4급", ex:"홍수로 강물이 넘쳐 흘렀다.", exTh:"น้ำในแม่น้ำล้นทะลักเนื่องจากน้ำท่วม", syn:"ตรงข้าม: 모자라다"},
-{kr:"놓이다", th:"โล่ง(ใจ), เบา(ใจ), สบาย(ใจ)", level:"3급", ex:"그의 소식을 듣고 마음이 놓였다.", exTh:"พอได้ยินข่าวคราวของเขาก็ใจโล่ง"},
-{kr:"늘어나다", th:"เพิ่มขึ้น, มากขึ้น, ขยาย", level:"3급", ex:"홍보 이후 가게에 손님이 늘어났다.", exTh:"หลังจากโฆษณาออกไปลูกค้าที่ร้านก็เพิ่มขึ้น", syn:"คำพ้อง: 증가하다 | ตรงข้าม: 줄어들다"},
-{kr:"늘어놓다", th:"สาธยาย, พูดพร่ำ, พูดมาก", level:"4급", ex:"그는 변명을 늘어놓기 바빴다.", exTh:"เขายุ่งอยู่กับการสาธยายข้ออ้างแก้ตัว"},
-{kr:"다가가다", th:"เข้าไปใกล้ๆ, ขยับเข้าใกล้, เข้าใกล้", level:"4급", ex:"한 걸음씩 그가 있는 곳으로 다가갔다.", exTh:"เข้าไปใกล้ๆ จุดที่เขาอยู่ทีละก้าว", syn:"ตรงข้าม: 다가오다"},
-{kr:"다투다", th:"ทะเลาะ, ถกเถียง, โต้แย้ง", level:"4급", ex:"두 사람이 다투는 소리가 들린다.", exTh:"ได้ยินเสียงที่ทั้งสองคนทะเลาะกัน", syn:"คำพ้อง: 싸우다"},
-{kr:"달다", th:"ชั่ง(น้ำหนัก)", level:"5급", ex:"고기를 저울에 달아 무게를 계산한다.", exTh:"ชั่งเนื้อที่ตราชั่งเพื่อคำนวณน้ำหนัก"},
-{kr:"달려가다", th:"วิ่งไป, รีบเข้าไป", level:"4급", ex:"나는 엄마 품으로 달려갔다.", exTh:"ฉันวิ่งไปในอ้อมกอดของแม่", syn:"ตรงข้าม: 달려오다"},
-{kr:"달려오다", th:"วิ่งมา, รีบเข้ามา", level:"4급", ex:"그는 소식을 듣고 한걸음에 달려왔다.", exTh:"พอเขาได้ยินข่าวคราวก็รีบวิ่งเข้ามา", syn:"ตรงข้าม: 달려가다"},
-{kr:"담기다", th:"ใส่, ถูกใส่", level:"3급", ex:"그릇에 담긴 포도가 먹음직스럽다.", exTh:"องุ่นที่ใส่ถ้วยไว้น่ากิน"},
-{kr:"당하다", th:"ถูก, โดน, ประสบ", level:"4급", ex:"이곳에서는 사기를 당하기 쉽다.", exTh:"ที่นี่เป็นสถานที่ที่ถูกหลอกได้ง่าย"},
-{kr:"닿다", th:"สัมผัส, แตะ, โดน", level:"3급", ex:"손이 많이 닿는 곳은 소독이 필요하다.", exTh:"จำเป็นต้องฆ่าเชื้อตรงที่มือสัมผัสบ่อยๆ"},
-{kr:"대다", th:"กับ, แตะ, สัมผัส", level:"3급", ex:"핸드폰을 귀에 대고 통화하고 있다.", exTh:"กำลังคุยโทรศัพท์มือถือที่หูและคุยโทรศัพท์"},
-{kr:"덧붙이다", th:"เพิ่ม, เพิ่มเติม, เสริม", level:"4급", ex:"더러워진 곳에 흰 벽지를 덧붙였다.", exTh:"ติดกระดาษบุผนังสีขาวเพิ่มเข้าไปตรงพื้นที่สกปรก", syn:"ตรงข้าม: 떼다"}
-];
+                                <!-- Mnemonic Note -->
+                                <div class="mt-1">
+                                    <label class="text-[10px] uppercase text-indigo-400 tracking-wider">Mnemonic Note (เทคนิคจำส่วนตัว):</label>
+                                    <input type="text" x-model="currentCard.mnemonic" @change="saveVocabs()" @click.stop class="w-full bg-indigo-900/40 border border-indigo-700/50 rounded-lg px-3 py-1.5 text-xs text-indigo-100 focus:outline-none focus:border-indigo-400" placeholder="พิมพ์เทคนิคช่วยจำของคุณ...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-/* ---------- SPEECH ---------- */
-let koreanVoice = null;
-function loadVoices(){
-  const voices = speechSynthesis.getVoices();
-  koreanVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('ko')) || null;
-}
-if('speechSynthesis' in window){
-  loadVoices();
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
-function speak(text){
-  if(!('speechSynthesis' in window)){
-    alert('ขออภัย อุปกรณ์นี้ไม่รองรับการอ่านออกเสียง');
-    return;
-  }
-  speechSynthesis.cancel();
-  const clean = text.replace(/[¹²]/g,'');
-  const utter = new SpeechSynthesisUtterance(clean);
-  utter.lang = 'ko-KR';
-  if(koreanVoice) utter.voice = koreanVoice;
-  utter.rate = 0.85;
-  speechSynthesis.speak(utter);
-}
-function speakWord(){
-  const idx = flashOrder[flashIndex];
-  speak(VOCAB[idx].kr);
-}
+                    <!-- SRS Assessment Buttons -->
+                    <div class="flex gap-3 mt-6">
+                        <button @click="processSRS('hard')" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 py-3 rounded-xl font-medium text-sm transition">
+                            😓 ยาก / จำไม่ได้<br><span class="text-[10px] opacity-75">ทบทวนอีกครั้งวันนี้</span>
+                        </button>
+                        <button @click="processSRS('medium')" class="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-700 py-3 rounded-xl font-medium text-sm transition">
+                            🤔 พอจำได้<br><span class="text-[10px] opacity-75">ทบทวนในอีก 3 วัน</span>
+                        </button>
+                        <button @click="processSRS('easy')" class="flex-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 py-3 rounded-xl font-medium text-sm transition">
+                            ง่ายมาก / แม่นแล้ว<br><span class="text-[10px] opacity-75">ทบทวนในอีก 7 วัน</span>
+                        </button>
+                    </div>
+                </div>
+            </template>
 
-/* ---------- FLASHCARDS ---------- */
-let flashOrder = VOCAB.map((_,i)=>i);
-let flashIndex = 0;
-let known = new Set();
-let unknown = new Set();
+            <template x-if="activeCards.length === 0">
+                <div class="text-center py-16 bg-white rounded-2xl border border-slate-200">
+                    <span class="text-5xl">🎉</span>
+                    <h3 class="text-lg font-bold text-slate-700 mt-4">ทบทวนครบหมดแล้วสำหรับวันนี้!</h3>
+                    <p class="text-sm text-slate-400 mt-1">ลองสลับไปทำ Auto Quiz หรือเพิ่มคำศัพท์ใหม่เข้าคลังดูนะ</p>
+                </div>
+            </template>
+        </section>
 
-function renderFlashcard(){
-  const idx = flashOrder[flashIndex];
-  const v = VOCAB[idx];
-  document.getElementById('fcKr').textContent = v.kr;
-  document.getElementById('fcLevel').textContent = v.level;
-  document.getElementById('fcTh').textContent = v.th;
-  document.getElementById('fcEx').textContent = v.ex + '\n' + v.exTh;
-  document.getElementById('fcEx').style.whiteSpace = 'pre-line';
-  document.getElementById('fcSyn').textContent = v.syn || '';
-  document.getElementById('flashcard').classList.remove('flipped');
-  document.getElementById('flashPos').textContent = (flashIndex+1) + ' / ' + VOCAB.length;
-  document.getElementById('flashScore').textContent = 'รู้แล้ว ' + known.size + ' | ยังไม่รู้ ' + unknown.size;
-  document.getElementById('flashProgress').style.width = ((flashIndex)/VOCAB.length*100) + '%';
-}
-document.getElementById('flashcard').addEventListener('click', function(){
-  this.classList.toggle('flipped');
-});
-function nextCard(){
-  flashIndex = (flashIndex+1) % VOCAB.length;
-  renderFlashcard();
-}
-function prevCard(){
-  flashIndex = (flashIndex-1+VOCAB.length) % VOCAB.length;
-  renderFlashcard();
-}
-function markCard(isKnown){
-  const idx = flashOrder[flashIndex];
-  if(isKnown){known.add(idx); unknown.delete(idx);}
-  else{unknown.add(idx); known.delete(idx);}
-  nextCard();
-}
-function shuffleCards(){
-  for(let i=flashOrder.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [flashOrder[i],flashOrder[j]] = [flashOrder[j],flashOrder[i]];
-  }
-  flashIndex = 0;
-  renderFlashcard();
-}
-renderFlashcard();
+        <!-- 2. AUTO QUIZ TAB -->
+        <section x-show="currentTab === 'quiz'" class="max-w-2xl mx-auto space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-bold text-lg text-slate-800">🧩 TOPIK Auto Multiple Choice Quiz</h2>
+                    <span class="text-xs bg-indigo-100 text-indigo-700 font-semibold px-2.5 py-1 rounded-full" x-text="`Score: ${quizScore}`"></span>
+                </div>
 
-/* ---------- NAV ---------- */
-document.querySelectorAll('nav button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-    document.getElementById(btn.dataset.view).classList.add('active');
-    if(btn.dataset.view==='quiz') startQuiz();
-    if(btn.dataset.view==='fill') startFill();
-    if(btn.dataset.view==='list') renderList();
-  });
-});
+                <template x-if="quizQuestion">
+                    <div>
+                        <!-- Question Context -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-6">
+                            <span class="text-xs text-slate-400 font-medium block mb-1">จงเลือกคำศัพท์ที่ถูกต้องสำหรับความหมายนี้:</span>
+                            <p class="text-xl font-bold text-indigo-600" x-text="quizQuestion.meaning"></p>
+                            <p class="text-xs text-slate-500 mt-2" x-text="`คำใบ้ประโยค: ${quizQuestion.sentence_trans || '-'}`"></p>
+                        </div>
 
-/* ---------- QUIZ (multiple choice) ---------- */
-let quizOrder = [];
-let quizIndex = 0;
-let quizScore = 0;
+                        <!-- Options -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                            <template x-for="(option, idx) in quizOptions" :key="idx">
+                                <button @click="checkAnswer(option)" 
+                                        :disabled="quizAnswered"
+                                        :class="{
+                                            'bg-slate-50 hover:bg-indigo-50 border-slate-200': !quizAnswered,
+                                            'bg-emerald-500 text-white border-emerald-600': quizAnswered && option === quizQuestion.word,
+                                            'bg-rose-500 text-white border-rose-600': quizAnswered && selectedAnswer === option && option !== quizQuestion.word
+                                        }"
+                                        class="p-4 rounded-xl border text-left font-medium transition flex justify-between items-center">
+                                    <span x-text="`${idx+1}. ${option}`"></span>
+                                    <button @click.stop="speak(option)" class="text-xs text-slate-400 hover:text-slate-600">🔊</button>
+                                </button>
+                            </template>
+                        </div>
 
-function shuffleArr(arr){
-  const a = arr.slice();
-  for(let i=a.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
+                        <div x-show="quizAnswered" class="flex justify-end">
+                            <button @click="nextQuiz()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium transition">
+                                ข้อต่อไป ➔
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
 
-function startQuiz(){
-  quizOrder = shuffleArr(VOCAB.map((_,i)=>i));
-  quizIndex = 0;
-  quizScore = 0;
-  renderQuiz();
-}
+        <!-- 3. DICTIONARY & HANJA TAB -->
+        <section x-show="currentTab === 'dict'" class="space-y-6">
+            <!-- Add Vocab Form -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h2 class="font-bold text-lg text-slate-800 mb-4">+ เพิ่มคำศัพท์ & รากศัพท์ Hanja ใหม่</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                    <input type="text" x-model="newVocab.word" placeholder="คำศัพท์เกาหลี" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    <input type="text" x-model="newVocab.hanja" placeholder="รากศัพท์จีน Hanja" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    <input type="text" x-model="newVocab.meaning" placeholder="ความหมายแปลไทย" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <input type="text" x-model="newVocab.related" placeholder="คำใกล้เคียง / กลุ่มศัพท์" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    <input type="text" x-model="newVocab.sentence" placeholder="ประโยคตัวอย่าง" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                    <select x-model="newVocab.level" class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500">
+                        <option value="TOPIK I">TOPIK I</option>
+                        <option value="TOPIK II">TOPIK II</option>
+                    </select>
+                </div>
+                <button @click="addVocab()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition">
+                    + บันทึกลงคลังศัพท์
+                </button>
+            </div>
 
-function renderQuiz(){
-  const area = document.getElementById('quizArea');
-  if(quizIndex >= quizOrder.length){
-    area.innerHTML = '<div class="q-box score-box"><h2>เสร็จแล้ว! 🎉</h2><p>คะแนน: ' + quizScore + ' / ' + quizOrder.length + '</p><button class="btn btn-primary" onclick="startQuiz()">ทำใหม่</button></div>';
-    return;
-  }
-  const idx = quizOrder[quizIndex];
-  const v = VOCAB[idx];
-  let distractors = shuffleArr(VOCAB.map((_,i)=>i).filter(i=>i!==idx)).slice(0,3);
-  let options = shuffleArr([idx, ...distractors]);
-  area.innerHTML = `
-    <div class="q-box">
-      <div class="q-count">ข้อ ${quizIndex+1} / ${quizOrder.length} &nbsp;|&nbsp; คะแนน ${quizScore}</div>
-      <div class="q-text">${v.kr} <span style="font-size:0.8rem;color:var(--muted);">(${v.level})</span> แปลว่าอะไร?</div>
-      <div class="options" id="quizOptions"></div>
-      <div class="feedback" id="quizFeedback"></div>
-    </div>
-  `;
-  const optContainer = document.getElementById('quizOptions');
-  options.forEach(optIdx=>{
-    const b = document.createElement('button');
-    b.className = 'opt-btn';
-    b.textContent = VOCAB[optIdx].th;
-    b.onclick = ()=>answerQuiz(optIdx, idx, b);
-    optContainer.appendChild(b);
-  });
-}
+            <!-- Vocabulary Table -->
+            <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
+                        <tr>
+                            <th class="p-4">คำศัพท์</th>
+                            <th class="p-4">รากศัพท์ Hanja</th>
+                            <th class="p-4">ความหมาย</th>
+                            <th class="p-4">ศัพท์ใกล้เคียง/กลุ่มคำ</th>
+                            <th class="p-4">ระดับ</th>
+                            <th class="p-4 text-center">ลบ</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        <template x-for="(item, index) in vocabs" :key="item.id">
+                            <tr class="hover:bg-slate-50/80 transition">
+                                <td class="p-4 font-semibold text-indigo-600">
+                                    <span x-text="item.word"></span>
+                                    <button @click="speak(item.word)" class="text-xs text-slate-400 hover:text-slate-600 ml-1">🔊</button>
+                                </td>
+                                <td class="p-4 text-slate-500" x-text="item.hanja || '-'"></td>
+                                <td class="p-4 text-slate-800" x-text="item.meaning"></td>
+                                <td class="p-4 text-xs text-indigo-600 font-medium" x-text="item.related || '-'"></td>
+                                <td class="p-4"><span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded" x-text="item.level"></span></td>
+                                <td class="p-4 text-center">
+                                    <button @click="deleteVocab(item.id)" class="text-rose-500 hover:text-rose-700 font-medium">ลบ</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-function answerQuiz(chosenIdx, correctIdx, btnEl){
-  const buttons = document.querySelectorAll('#quizOptions .opt-btn');
-  buttons.forEach(b=>b.disabled = true);
-  buttons.forEach(b=>{
-    if(b.textContent === VOCAB[correctIdx].th) b.classList.add('correct');
-  });
-  const fb = document.getElementById('quizFeedback');
-  if(chosenIdx === correctIdx){
-    quizScore++;
-    fb.textContent = '✅ ถูกต้อง!';
-    fb.className = 'feedback good';
-  } else {
-    btnEl.classList.add('wrong');
-    fb.textContent = '❌ ผิด คำตอบที่ถูกคือ "' + VOCAB[correctIdx].th + '"';
-    fb.className = 'feedback bad';
-  }
-  setTimeout(()=>{ quizIndex++; renderQuiz(); }, 1200);
-}
+        <!-- 4. MOCK TEST & MISTAKES TAB -->
+        <section x-show="currentTab === 'mocks'" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Mock Log -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="font-bold text-lg text-slate-800">📊 บันทึกคะแนน Mock Test</h2>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="number" x-model="newMock.listen" placeholder="ฟัง (100)" class="p-2 bg-slate-50 border rounded-lg text-sm">
+                        <input type="number" x-model="newMock.read" placeholder="อ่าน (100)" class="p-2 bg-slate-50 border rounded-lg text-sm">
+                        <input type="number" x-model="newMock.write" placeholder="เขียน (100)" class="p-2 bg-slate-50 border rounded-lg text-sm">
+                    </div>
+                    <input type="text" x-model="newMock.title" placeholder="ชื่อชุดข้อสอบ/ปี" class="w-full p-2 bg-slate-50 border rounded-lg text-sm">
+                    <button @click="addMock()" class="w-full bg-indigo-600 text-white p-2.5 rounded-xl font-medium text-sm">+ บันทึกคะแนน</button>
 
-/* ---------- FILL IN THE BLANK ---------- */
-let fillOrder = [];
-let fillIndex = 0;
-let fillScore = 0;
+                    <div class="space-y-2 mt-4">
+                        <template x-for="m in mockLogs" :key="m.id">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center text-sm">
+                                <div>
+                                    <span class="font-bold text-slate-700" x-text="m.title"></span>
+                                    <p class="text-xs text-slate-400" x-text="`ฟัง: ${m.listen} | อ่าน: ${m.read} | เขียน: ${m.write}`"></p>
+                                </div>
+                                <span class="text-indigo-600 font-bold" x-text="`${m.listen + m.read + m.write} / 300`"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
-function startFill(){
-  fillOrder = shuffleArr(VOCAB.map((_,i)=>i));
-  fillIndex = 0;
-  fillScore = 0;
-  renderFill();
-}
+                <!-- Weak-Word & Mistakes Log -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                    <h2 class="font-bold text-lg text-slate-800">❌ บันทึกจุดผิดซ้ำ (Mistakes Log)</h2>
+                    <input type="text" x-model="newMistake.q" placeholder="ข้อที่ผิด / ชุดข้อสอบ" class="w-full p-2 bg-slate-50 border rounded-lg text-sm">
+                    <input type="text" x-model="newMistake.note" placeholder="สาเหตุที่ผิด & สิ่งที่ต้องจำเพิ่ม" class="w-full p-2 bg-slate-50 border rounded-lg text-sm">
+                    <button @click="addMistake()" class="w-full bg-rose-500 text-white p-2.5 rounded-xl font-medium text-sm">+ บันทึกข้อผิดพลาด</button>
 
-function blankSentence(sentence, word){
-  const base = word.replace(/[¹²]/g,'');
-  // try to find the word stem in the sentence (Korean verbs are conjugated, so match first 1-2 chars)
-  const stem = base.slice(0, Math.max(1, base.length-2));
-  const re = new RegExp(stem + '[가-힣]*');
-  const match = sentence.match(re);
-  if(match){
-    return sentence.replace(match[0], '<span class="blank">______</span>');
-  }
-  return sentence;
-}
+                    <div class="space-y-2 mt-4">
+                        <template x-for="mk in mistakeLogs" :key="mk.id">
+                            <div class="p-3 bg-rose-50 border border-rose-100 rounded-xl text-sm">
+                                <span class="font-bold text-rose-800" x-text="mk.q"></span>
+                                <p class="text-xs text-rose-600 mt-1" x-text="mk.note"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-function renderFill(){
-  const area = document.getElementById('fillArea');
-  if(fillIndex >= fillOrder.length){
-    area.innerHTML = '<div class="q-box score-box"><h2>เสร็จแล้ว! 🎉</h2><p>คะแนน: ' + fillScore + ' / ' + fillOrder.length + '</p><button class="btn btn-primary" onclick="startFill()">ทำใหม่</button></div>';
-    return;
-  }
-  const idx = fillOrder[fillIndex];
-  const v = VOCAB[idx];
-  let distractors = shuffleArr(VOCAB.map((_,i)=>i).filter(i=>i!==idx)).slice(0,3);
-  let options = shuffleArr([idx, ...distractors]);
-  area.innerHTML = `
-    <div class="q-box">
-      <div class="q-count">ข้อ ${fillIndex+1} / ${fillOrder.length} &nbsp;|&nbsp; คะแนน ${fillScore}</div>
-      <div class="q-sentence">${blankSentence(v.ex, v.kr)}</div>
-      <div style="font-size:0.85rem;color:var(--muted);margin-bottom:14px;">คำแปล: ${v.exTh}</div>
-      <div style="font-size:0.9rem;margin-bottom:10px;">เลือกคำกริยาที่เหมาะกับช่องว่าง (ความหมาย: <b>${v.th}</b>)</div>
-      <div class="options" id="fillOptions"></div>
-      <div class="feedback" id="fillFeedback"></div>
-    </div>
-  `;
-  const optContainer = document.getElementById('fillOptions');
-  options.forEach(optIdx=>{
-    const b = document.createElement('button');
-    b.className = 'opt-btn';
-    b.textContent = VOCAB[optIdx].kr;
-    b.onclick = ()=>answerFill(optIdx, idx, b);
-    optContainer.appendChild(b);
-  });
-}
+    <script>
+        function topikApp() {
+            return {
+                currentTab: 'srs',
+                isFlipped: false,
+                filterWeakOnly: false,
+                currentIndex: 0,
+                
+                // Form models
+                newVocab: { word: '', hanja: '', meaning: '', related: '', sentence: '', sentence_trans: '', level: 'TOPIK II' },
+                newMock: { title: '', listen: null, read: null, write: null },
+                newMistake: { q: '', note: '' },
 
-function answerFill(chosenIdx, correctIdx, btnEl){
-  const buttons = document.querySelectorAll('#fillOptions .opt-btn');
-  buttons.forEach(b=>b.disabled = true);
-  buttons.forEach(b=>{
-    if(b.textContent === VOCAB[correctIdx].kr) b.classList.add('correct');
-  });
-  const fb = document.getElementById('fillFeedback');
-  if(chosenIdx === correctIdx){
-    fillScore++;
-    fb.textContent = '✅ ถูกต้อง!';
-    fb.className = 'feedback good';
-  } else {
-    btnEl.classList.add('wrong');
-    fb.textContent = '❌ ผิด คำตอบที่ถูกคือ "' + VOCAB[correctIdx].kr + '"';
-    fb.className = 'feedback bad';
-  }
-  setTimeout(()=>{ fillIndex++; renderFill(); }, 1200);
-}
+                // Quiz state
+                quizQuestion: null,
+                quizOptions: [],
+                selectedAnswer: null,
+                quizAnswered: false,
+                quizScore: 0,
 
-/* ---------- LIST VIEW ---------- */
-function renderList(){
-  const area = document.getElementById('listArea');
-  area.innerHTML = VOCAB.map((v,i) => `
-    <div class="list-item">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <div class="word-kr">${v.kr} <span class="word-level">${v.level}</span></div>
-        <button class="speak-btn" style="position:static;width:32px;height:32px;font-size:1rem;" onclick="speak('${v.kr.replace(/[¹²]/g,'')}')">🔊</button>
-      </div>
-      <div class="word-th">${v.th}</div>
-      <div class="word-ex">${v.ex} — ${v.exTh}</div>
-    </div>
-  `).join('');
-}
-</script>
+                // Main Databases
+                vocabs: [],
+                mockLogs: [],
+                mistakeLogs: [],
+
+                initData() {
+                    // ศัพท์ชุดใหม่ของคุณทั้งหมดถูกบรรจุลงในนี้เรียบร้อยครับ
+                    const defaultVocabs = [
+                        { id: 1, word: '모임', hanja: '순우리말', pos: 'Noun', meaning: 'การประชุม, การรวมตัว, งานสังสรรค์', related: 'ประชุมทั่วไป / สังสรรค์เพื่อนฝูง', level: 'TOPIK I', mnemonic: '모이다 (มารวมกัน)', srs: { status: 'hard' } },
+                        { id: 2, word: '집합', hanja: '集合 (집: รวบรวม / 합: รวม)', pos: 'Noun', meaning: 'การรวมกลุ่ม, การรวมตัวกัน', related: 'เน้นมารวมตัว ณ จุดที่นัดหมาย', level: 'TOPIK II', mnemonic: 'รวมกันที่บ้าน (집)', srs: { status: 'hard' } },
+                        { id: 3, word: '회합', hanja: '會合 (회: พบปะ / 합: รวม)', pos: 'Noun', meaning: 'การพบปะ, การประชุม', related: 'ภาษาทางการ / วิชาการ', level: 'TOPIK II', mnemonic: 'พบปะอย่างเป็นทางการ', srs: { status: 'hard' } },
+                        { id: 4, word: '회의', hanja: '會議 (회: พบปะ / 의: ปรึกษา)', pos: 'Noun', meaning: 'การประชุม (เพื่อหารือ/ทำงาน)', related: '회의실 (ห้องประชุม)', level: 'TOPIK I', mnemonic: 'ประชุมเรื่องงาน', srs: { status: 'hard' } },
+                        { id: 5, word: '집회', hanja: '集會 (집: รวบรวม / 회: พบปะ)', pos: 'Noun', meaning: 'การชุมนุม, การรวมตัวสาธารณะ', related: 'การชุมนุมทางการเมือง/ที่สาธารณะ', level: 'TOPIK II', mnemonic: 'ชุมนุมคนเยอะๆ', srs: { status: 'hard' } },
+                        { id: 6, word: '대회', hanja: '大會 (대: ใหญ่ / 회: พบปะ)', pos: 'Noun', meaning: 'การประชุมใหญ่, การแข่งขันใหญ่', related: '운동회 (งานแข่งกีฬา), 대회에 참가하다', level: 'TOPIK I', mnemonic: 'งานใหญ่ (대)', srs: { status: 'hard' } },
+                        { id: 7, word: '계단', hanja: '階段', pos: 'Noun', meaning: 'บันได', related: '엘리베이터 (ลิฟต์), 에스컬레이터 (บันไดเลื่อน)', level: 'TOPIK I', mnemonic: '계단을 올라가다 (ขึ้นบันได)', srs: { status: 'hard' } },
+                        { id: 8, word: '저렴하다', hanja: '低廉 (저: ต่ำ / 렴: ถูก)', pos: 'Adj', meaning: '(ราคา) ถูก, ย่อมเยา', related: '싸다 (ถูก) <-> 비싸다 (แพง)', level: 'TOPIK II', mnemonic: 'ราคาต่ำ (저)', srs: { status: 'hard' } },
+                        { id: 9, word: '행사장', hanja: '催事場', pos: 'Noun', meaning: 'สถานที่จัดงาน / กิจกรรม', related: '행사 (กิจกรรม), 입장료 (ค่าเข้า)', level: 'TOPIK II', mnemonic: 'สถานที่ (장) จัดงาน (행사)', srs: { status: 'hard' } },
+                        { id: 10, word: '기차표', hanja: '汽車票', pos: 'Noun', meaning: 'ตั๋วรถไฟ', related: '승차권 (ตั๋วโดยสาร), 비행기표 (ตั๋วเครื่องบิน)', level: 'TOPIK I', mnemonic: 'ตั๋ว (표) รถไฟ (기차)', srs: { status: 'hard' } },
+                        { id: 11, word: '예매하다', hanja: '預買 (예: ล่วงหน้า / 매: ซื้อ)', pos: 'Verb', meaning: 'จองล่วงหน้า (ใช้กับ ตั๋ว/บัตร)', related: '예약하다 (จองโรงแรม/ร้านอาหาร)', level: 'TOPIK I', mnemonic: 'ซื้อ (매) ล่วงหน้า (예)', srs: { status: 'hard' } },
+                        { id: 12, word: '타다', hanja: '순우리말', pos: 'Verb', meaning: 'ขึ้น / ขี่ / นั่ง (ยานพาหนะ)', related: '<-> 내리다 (ลงยานพาหนะ)', level: 'TOPIK I', mnemonic: 'ขึ้นรถ 버스를 타다', srs: { status: 'hard' } },
+                        { id: 13, word: '물건', hanja: '物件', pos: 'Noun', meaning: 'สิ่งของ, สินค้า', related: '상품 (สินค้า), 물품 (พัสดุ/สิ่งของ)', level: 'TOPIK I', mnemonic: 'ของใช้ 물건', srs: { status: 'hard' } },
+                        { id: 14, word: '미끄럽다', hanja: '순우리말', pos: 'Adj', meaning: 'ลื่น', related: '미끄러지다 (ลื่นไถล)', level: 'TOPIK II', mnemonic: 'ถนนลื่น 길이 미끄럽다', srs: { status: 'hard' } },
+                        { id: 15, word: '넘어지다', hanja: '순우리말', pos: 'Verb', meaning: 'หกล้ม, ล้มลง', related: '쓰러지다 (ทรุด/ล้มพับ)', level: 'TOPIK I', mnemonic: 'ล้มลงไป 넘어지다', srs: { status: 'hard' } },
+                        { id: 16, word: '부딪히다', hanja: '순우리말', pos: 'Verb', meaning: 'ชน, กระแทก', related: '부딪치다 (ชนอย่างแรง)', level: 'TOPIK II', mnemonic: 'กระแทกโดน', srs: { status: 'hard' } },
+                        { id: 17, word: '눕다', hanja: '순우리말', pos: 'Verb', meaning: 'นอนลง', related: '침대에 눕다 (นอนลงบนเตียง)', level: 'TOPIK I', mnemonic: 'สะกดด้วย ㅂ (눕다)', srs: { status: 'hard' } },
+                        { id: 18, word: '기침', hanja: '순우리말', pos: 'Noun', meaning: 'อาการไอ', related: '감기 (ไข้หวัด), 기침을 하다 (ไอ)', level: 'TOPIK I', mnemonic: 'ไอ คิชิม', srs: { status: 'hard' } },
+                        { id: 19, word: '열', hanja: '熱', pos: 'Noun', meaning: 'ไข้, ความร้อน', related: '열이 나다 (มีไข้)', level: 'TOPIK I', mnemonic: 'ร้อน = 熱 (ยอล)', srs: { status: 'hard' } },
+                        { id: 20, word: '축구', hanja: '蹴球', pos: 'Noun', meaning: 'ฟุตบอล', related: '농구 (บาส), 야구 (เบสบอล)', level: 'TOPIK I', mnemonic: 'เตะลูกบอล 축구', srs: { status: 'hard' } },
+                        { id: 21, word: '전시회', hanja: '展示會', pos: 'Noun', meaning: 'นิทรรศการ, งานแสดงผลงาน', related: '박물관 (พิพิธภัณฑ์), 미술관 (หอศิลป์)', level: 'TOPIK II', mnemonic: 'งานแสดง (전시)', srs: { status: 'hard' } },
+                        { id: 22, word: '챙기다', hanja: '순우리말', pos: 'Verb', meaning: 'จัดเตรียม, พกพา, ดูแล', related: '준비하다 (เตรียมตัว), 챙겨 먹다 (หาข้าวกิน)', level: 'TOPIK II', mnemonic: 'พกตังค์ พกของ 챙기다', srs: { status: 'hard' } },
+                        { id: 23, word: '생활', hanja: '生活', pos: 'Noun', meaning: 'การดำเนินชีวิต, การใช้ชีวิต', related: '일상생활 (ชีวิตประจำวัน)', level: 'TOPIK I', mnemonic: 'ชีวิต (생) สดใส', srs: { status: 'hard' } },
+                        { id: 24, word: '운전면허증', hanja: '駕駛免許證', pos: 'Noun', meaning: 'ใบขับขี่', related: '신분증 (บัตรประชาชน)', level: 'TOPIK II', mnemonic: 'ใบอนุญาต (면허) ขับรถ (운전)', srs: { status: 'hard' } }
+                    ];
+
+                    this.vocabs = JSON.parse(localStorage.getItem('topik_srs_vocabs')) || defaultVocabs;
+                    this.mockLogs = JSON.parse(localStorage.getItem('topik_srs_mocks')) || [];
+                    this.mistakeLogs = JSON.parse(localStorage.getItem('topik_srs_mistakes')) || [];
+
+                    this.setupQuiz();
+                },
+
+                get weakBucket() {
+                    return this.vocabs.filter(v => v.srs.status === 'hard');
+                },
+
+                get activeCards() {
+                    return this.filterWeakOnly ? this.weakBucket : this.vocabs;
+                },
+
+                get currentCard() {
+                    return this.activeCards[this.currentIndex] || {};
+                },
+
+                processSRS(status) {
+                    if(!this.currentCard.id) return;
+                    
+                    const item = this.vocabs.find(v => v.id === this.currentCard.id);
+                    if(item) {
+                        item.srs.status = status;
+                        this.saveVocabs();
+                    }
+
+                    this.isFlipped = false;
+                    setTimeout(() => {
+                        this.currentIndex = (this.currentIndex + 1) % this.activeCards.length;
+                    }, 200);
+                },
+
+                speak(text) {
+                    if (!('speechSynthesis' in window)) return alert('เบราว์เซอร์นี้ไม่รองรับการออกเสียง');
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'ko-KR';
+                    window.speechSynthesis.speak(utterance);
+                },
+
+                // QUIZ SYSTEM
+                setupQuiz() {
+                    if(this.vocabs.length === 0) return;
+                    this.quizAnswered = false;
+                    this.selectedAnswer = null;
+
+                    const randomItem = this.vocabs[Math.floor(Math.random() * this.vocabs.length)];
+                    this.quizQuestion = randomItem;
+
+                    let choices = [randomItem.word];
+                    while(choices.length < Math.min(4, this.vocabs.length)) {
+                        const randOption = this.vocabs[Math.floor(Math.random() * this.vocabs.length)].word;
+                        if(!choices.includes(randOption)) choices.push(randOption);
+                    }
+                    this.quizOptions = choices.sort(() => Math.random() - 0.5);
+                },
+
+                checkAnswer(option) {
+                    this.selectedAnswer = option;
+                    this.quizAnswered = true;
+                    if(option === this.quizQuestion.word) {
+                        this.quizScore += 10;
+                    } else {
+                        this.quizQuestion.srs.status = 'hard';
+                        this.saveVocabs();
+                    }
+                },
+
+                nextQuiz() {
+                    this.setupQuiz();
+                },
+
+                // VOCAB MANAGEMENT
+                addVocab() {
+                    if(!this.newVocab.word || !this.newVocab.meaning) return alert('กรอกคำศัพท์และความหมายอย่างน้อยด้วยนะครับ');
+                    
+                    this.vocabs.push({
+                        id: Date.now(),
+                        ...this.newVocab,
+                        srs: { status: 'hard' }
+                    });
+
+                    this.saveVocabs();
+                    this.newVocab = { word: '', hanja: '', meaning: '', related: '', sentence: '', sentence_trans: '', level: 'TOPIK II' };
+                },
+
+                deleteVocab(id) {
+                    this.vocabs = this.vocabs.filter(v => v.id !== id);
+                    this.saveVocabs();
+                },
+
+                saveVocabs() {
+                    localStorage.setItem('topik_srs_vocabs', JSON.stringify(this.vocabs));
+                },
+
+                // MOCK & MISTAKE
+                addMock() {
+                    if(!this.newMock.title) return;
+                    this.mockLogs.push({ id: Date.now(), ...this.newMock });
+                    localStorage.setItem('topik_srs_mocks', JSON.stringify(this.mockLogs));
+                    this.newMock = { title: '', listen: null, read: null, write: null };
+                },
+
+                addMistake() {
+                    if(!this.newMistake.q) return;
+                    this.mistakeLogs.push({ id: Date.now(), ...this.newMistake });
+                    localStorage.setItem('topik_srs_mistakes', JSON.stringify(this.mistakeLogs));
+                    this.newMistake = { q: '', note: '' };
+                }
+            }
+        }
+    </script>
 </body>
 </html>
